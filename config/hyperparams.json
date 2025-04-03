@@ -1,0 +1,50 @@
+{
+    "data_config": {
+        "DATA_FILE": "data/data.txt",
+        "USE_AUGMENTATION": true,
+        "USE_ACTIVE_LEARNING": true,
+        "ACTIVE_LEARNING_ROUNDS": 2,
+        "ACTIVE_LEARNING_TOP_K": 5,
+        "SPLIT_RATIO": 0.8
+    },
+    "model_config": {
+        "MODEL_TYPE": "lstm",
+        "EMBEDDING_DIM": 256,
+        "HIDDEN_SIZE": 512,
+        "NUM_LAYERS": 2,
+        "DROPOUT": 0.3,
+        "MULTI_TASK": false,
+        "NHEAD": 4,
+        "EPOCHS": 5,
+        "BATCH_SIZE": 64,
+        "LEARNING_RATE": 0.001,
+        "SCHEDULER_STEP": 3,
+        "SCHEDULER_GAMMA": 0.5,
+        "CLIP": 5,
+        "TEMPERATURE": 1.0,
+        "META_LEARNING": false,
+        "META_LEARNING_RATE": 0.0005,
+        "LOG_DIR": "logs",
+        "CHECKPOINT_PATH": "saved_models/best_model.pth",
+        "START_WORDS": ["the", "quick", "brown"],
+        "NUM_WORDS_TO_GENERATE": 100,
+        "USE_ENSEMBLE": true
+    },
+    "mlp_config": {
+        "input_size": 10,
+        "hidden_layers": [32, 16],
+        "output_size": 2,
+        "dropout": 0.1,
+        "learning_rate": 0.001,
+        "epochs": 50,
+        "activation": "relu",
+        "batch_norm": true,
+        "initializer": "he",
+        "optimizer": "adam",
+        "lr_step": 10,
+        "lr_gamma": 0.9,
+        "criterion": "cross_entropy",
+        "momentum": 0.9,
+        "print_every": 10
+    }
+}

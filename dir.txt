@@ -1,0 +1,36 @@
+🧬 neural_network/
+ ┣ 📂 config
+ ┃ ┣ 📜 config.py  # Model & training configurations  
+ ┃ ┣ 📜 hyperparams.json   # Hyperparameter storage  
+ ┃ ┗ 📜 logging_config.py  # Logger setup  
+ ┣ 📂 data  
+ ┃ ┣ 📜 data.py  # Data processing & dataset management  
+ ┃ ┣ 📜 augmentation.py  # Data augmentation methods  
+ ┃ ┣ 📜 active_learning.py    # Active learning methods  
+ ┃ ┗ 📜 few_shot.py      # Few-shot learning techniques  
+ ┣ 📂 model  
+ ┃ ┣ 📜 rnn.py     # RNN-based model  
+ ┃ ┣ 📜 lstm.py     # LSTM-based model  
+ ┃ ┣ 📜 transformer.py   # Transformer-based model  
+ ┃ ┣ 📜 ensemble.py  # Ensemble with NN-based voting  
+ ┃ ┣ 📜 reinforcement.py # RL-based generation refinement
+ ┃ ┗ 📜 pid_controller.py  # PID for adaptive learning  
+ ┣ 📂 train  
+ ┃ ┣ 📜 train.py          # Training pipeline  
+ ┃ ┣ 📜 optimizer.py   # learning rate scheduling  
+ ┃ ┣ 📜 checkpoint.py     # Model checkpointing  
+ ┃ ┗ 📜 reinforcement.py    # RL-based training  
+ ┣ 📂 inference  
+ ┃ ┣ 📜 generate.py     # Text generation pipeline  
+ ┃ ┣ 📜 evaluation.py    # Model evaluation & metrics  
+ ┃ ┗ 📜 pid_controller.py  # PID inference stability  
+ ┣ 📂 logs        # Logs & TensorBoard outputs  
+ ┃ ┣ 📜 data_scraping.log 
+ ┃ ┣ 📜 training.log 
+ ┃ ┗ 📜 tensorboard.log
+ ┣ 📂 saved_models      # Trained models & checkpoints  
+ ┣ 📜 main.py    # Entry point for training & inference
+ ┣ 📜 utils.py 
+ ┣ 📜 requirements.txt     # Dependencies list  
+ ┣ 📜 next_updates.txt    # Future development roadmap  
+ ┗ 📜 README.md            # Project doc.

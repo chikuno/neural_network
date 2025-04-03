@@ -1,0 +1,11 @@
+torch
+torchvision
+torchaudio
+tqdm
+tensorboard
+nltk
+deep-translator
+beautifulsoup4
+requests
+numpy
+matplotlib
