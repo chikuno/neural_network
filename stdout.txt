@@ -1,0 +1,14 @@
+Using device: cpu
+
+Generated Text at Temperature 1.1748:
+the quick brown the
+
+Generated Text at Temperature 1.3572000000000002:
+the quick brown the
+
+Generated Text at Temperature 1.5:
+the quick brown the
+
+Ensemble Generated Text:
+ the quick brown the
+Skipping interactive chat and exiting.

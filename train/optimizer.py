@@ -2,7 +2,7 @@
 
 import torch
 import torch.optim as optim
-from pid_controller import PIDController
+from model.pid_controller import PIDController
 
 class MetaOptimizer:
     """
@@ -15,17 +15,32 @@ class MetaOptimizer:
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=scheduler_step, gamma=gamma)
         self.pid_controller = PIDController(Kp=0.05, Ki=0.005, Kd=0.001, setpoint=0.02) if use_pid else None
 
-    def step(self, loss):
+    def step(self, loss=None):
         """Performs an optimization step with gradient clipping and PID-based LR adjustment."""
+        # Backwards-compatible API: if a loss is provided, perform backward here.
+        if loss is not None:
+            # Caller provided loss -> MetaOptimizer handles backward as before
+            self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            self.optimizer.step()
+            if self.pid_controller:
+                try:
+                    lr_adjustment = self.pid_controller.update(loss.item())
+                    for param_group in self.optimizer.param_groups:
+                        param_group['lr'] = max(1e-6, param_group['lr'] + lr_adjustment)
+                except Exception:
+                    pass
+            self.scheduler.step()
+        else:
+            # No loss provided -> assume caller already did backward()
+            self.optimizer.step()
+            # PID update not possible without loss value; still advance scheduler
+            self.scheduler.step()
+
+    def zero_grad(self):
+        """Expose zero_grad to behave like a regular optimizer."""
         self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-        self.optimizer.step()
-        if self.pid_controller:
-            lr_adjustment = self.pid_controller.update(loss.item())
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = max(1e-6, param_group['lr'] + lr_adjustment)
-        self.scheduler.step()
 
     def get_lr(self):
         """Returns the current learning rate."""

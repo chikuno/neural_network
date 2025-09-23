@@ -71,6 +71,11 @@ MODEL_TYPE = "lstm"                  # Selected model type
 
 NHEAD = 4                            # Number of attention heads (for transformer model)
 
+# ----------------------------
+# Network / scraping defaults
+# ----------------------------
+USER_AGENT = "neural_network_scraper/1.0 (+https://example.com/contact)"
+
 
 # ----------------------------
 # Data Augmentation & Active Learning

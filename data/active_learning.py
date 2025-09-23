@@ -20,8 +20,23 @@ def select_uncertain_samples(model, data_inputs, top_k=10, device='cpu'):
         A tensor containing the most uncertain samples.
     """
     model.eval()
+    # Handle empty input
+    if data_inputs is None or data_inputs.numel() == 0:
+        return data_inputs
+
+    # Ensure batch dimension: if provided a single sample (1D), make it batch size 1
+    if data_inputs.dim() == 1:
+        data_inputs = data_inputs.unsqueeze(0)
+
     with torch.no_grad():
-        outputs = model(data_inputs.to(device))
+        try:
+            outputs = model(data_inputs.to(device))
+        except TypeError:
+            # Some models (RNN/GRU/LSTM) expect a hidden state as second arg.
+            batch_size = data_inputs.size(0)
+            hidden = model.init_hidden(batch_size, device)
+            outputs = model(data_inputs.to(device), hidden)
+
         logits = outputs[0] if isinstance(outputs, tuple) else outputs
         probabilities = F.softmax(logits, dim=1)
         entropy_scores = calculate_entropy(probabilities)

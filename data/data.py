@@ -4,10 +4,14 @@ import logging
 import torch
 import requests
 from collections import Counter
-from bs4 import BeautifulSoup
-import wikipediaapi  # Wikipedia API for better scraping
-from googletrans import Translator  # Translate text into multiple languages
+# ThreadPoolExecutor is a stdlib import; keep imports grouped at the top
 from concurrent.futures import ThreadPoolExecutor
+# BeautifulSoup is required; wikipediaapi is optional and imported lazily
+from bs4 import BeautifulSoup
+# googletrans import is intentionally lazy inside translate_text()
+# because importing it at module import time pulls in httpx which
+# can depend on stdlib modules removed in some Python versions (e.g. cgi).
+Translator = None
 
 # 📂 Directory and File Paths
 DATA_DIR = "data"
@@ -76,8 +80,42 @@ def data_to_tensors(sequences, device):
     return inputs, targets
 
 def fetch_wikipedia_articles(topics, lang="en"):
-    """Scrapes Wikipedia pages for given topics."""
-    wiki = wikipediaapi.Wikipedia(lang)
+    """Scrapes Wikipedia pages for given topics.
+
+    The wikipediaapi package is optional. If it's not available we log a
+    warning and skip scraping.
+    """
+    try:
+        import wikipediaapi
+    except Exception:
+        logging.warning("wikipediaapi not available -- skipping wikipedia scraping")
+        return
+
+    # wikipediaapi doesn't always accept a user_agent parameter in all versions.
+    # We'll try to construct it with a user_agent when available; otherwise
+    # we'll fall back to setting the underlying session's headers if possible.
+    try:
+        from config import config as cfg
+        default_ua = getattr(cfg, 'USER_AGENT', None)
+    except Exception:
+        default_ua = None
+
+    try:
+        # Preferred call: pass user_agent as named arg (newer wikipediaapi versions)
+        if default_ua:
+            wiki = wikipediaapi.Wikipedia(language=lang, user_agent=default_ua)
+        else:
+            wiki = wikipediaapi.Wikipedia(language=lang)
+    except TypeError:
+        # Fallback: try without user_agent then set session headers if exposed
+        wiki = wikipediaapi.Wikipedia(lang)
+        try:
+            # Some versions expose a session or http attribute where headers can be set
+            if default_ua and hasattr(wiki, 'session'):
+                wiki.session.headers.update({'User-Agent': default_ua})
+        except Exception:
+            # Give up quietly and continue — the caller will see Wikipedia's own errors
+            pass
     with open(SCRAPED_FILE, "a", encoding="utf-8") as file:
         for topic in topics:
             try:
@@ -113,8 +151,24 @@ def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip()
 
 def translate_text(text, target_languages):
-    """Translates text into multiple languages using multi-threading."""
-    translator = Translator()
+    """Translates text into multiple languages using multi-threading.
+
+    The googletrans package is optional. If it's not available or fails
+    to import, this function returns an empty dict and logs a warning.
+    """
+    try:
+        # lazy import to avoid importing httpx at module import time
+        from googletrans import Translator as _Translator
+    except Exception:
+        logging.warning("googletrans not available or failed to import -- skipping translations")
+        return {}
+
+    try:
+        translator = _Translator()
+    except Exception:
+        logging.error("Failed to initialize Translator")
+        return {}
+
     translations = {}
 
     def translate(lang):
@@ -154,7 +208,7 @@ def build_dictionary(text):
 if __name__ == "__main__":
     setup_directories()
 
-    wiki_topics = ["Artificial Intelligence", "Deep Learning", "Neural Networks"]
+    wiki_topics = ["Greetings", "Etiquete", "Response to questions", "Type of questions","simple greatings"]
     urls_to_scrape = [
         "https://www.gutenberg.org/files/1342/1342-0.txt",
         "https://www.gutenberg.org/files/11/11-0.txt"

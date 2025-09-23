@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class AdvancedMLP(nn.Module):
     def __init__(self, input_size, hidden_layers, output_size, dropout=0.5, 
                  activation='relu', batch_norm=True, initializer='he', 
-                 multi_task=False, task_outputs=None, weight_decay=0.0):
+                 multi_task=False, task_outputs=None, weight_decay=0.0,
+                 use_embedding=False, vocab_size=None, embedding_dim=None):
         """
         :param input_size: Number of input features
         :param hidden_layers: List of integers representing the number of neurons in each hidden layer
@@ -30,6 +30,19 @@ class AdvancedMLP(nn.Module):
         self.multi_task = multi_task
         self.task_outputs = task_outputs
         self.weight_decay = weight_decay
+        # Optional embedding configuration
+        self.use_embedding = use_embedding
+        if self.use_embedding:
+            if vocab_size is None:
+                raise ValueError('vocab_size must be provided if use_embedding is True')
+            # default embedding dim to input_size if not provided
+            self.vocab_size = vocab_size
+            self.embedding_dim = embedding_dim or input_size
+            self.embed = nn.Embedding(self.vocab_size, self.embedding_dim)
+            # adjust first linear layer input size to embedding_dim
+            in_features = self.embedding_dim
+        else:
+            in_features = input_size
 
         # If multi-task, adjust output layer configurations
         if multi_task:
@@ -40,7 +53,6 @@ class AdvancedMLP(nn.Module):
 
         # Build the MLP network
         layers = []
-        in_features = input_size
         
         for h in hidden_layers:
             layers.append(nn.Linear(in_features, h))
@@ -86,6 +98,13 @@ class AdvancedMLP(nn.Module):
         """
         Forward pass of the MLP model
         """
+        # If the model uses an embedding and x is an index tensor, embed first
+        if self.use_embedding and x.dtype == torch.long:
+            # x may be shape (1,) or (batch,); ensure long and move through embed
+            emb = self.embed(x.to(torch.long))
+            # embed returns (batch, embedding_dim) for indices; ensure correct shape
+            x = emb
+
         x = self.model(x)
         
         if self.multi_task:

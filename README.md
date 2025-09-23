@@ -35,89 +35,65 @@ neural_network/
 ┃ ┣ reinforcement.py      # RL-based generation refinement
 ┃ ┗ pid_controller.py     # PID controller for adaptive learning
 ┣ train/
-┃ ┣ train.py              # Training pipeline
-┃ ┣ optimizer.py          # Learning rate scheduling & meta-optimizer
-┃ ┣ checkpoint.py         # Model checkpointing
-┃ ┗ reinforcement.py      # RL-based training
-┣ inference/
-┃ ┣ generate.py           # Text generation pipeline
-┃ ┣ evaluation.py         # Model evaluation & metrics
-┃ ┗ pid_controller.py     # PID inference stability
-┣ logs/                   # Logs & TensorBoard outputs
-┣ saved_models/           # Trained models & checkpoints
-┣ main.py                 # Entry point for training & inference
-┣ utils.py                # Utility functions for training & evaluation
-┣ requirements.txt        # Dependencies list
-┣ next_updates.txt        # Future development roadmap
-┗ README.md               # Project documentation
+```markdown
+# neural_network — quick start
 
----
+This repository contains a small text-generation research project (LSTM/GRU/MLP/Transformer candidates), a training loop, and a simple inference pipeline.
 
-## Setup
+Prerequisites
+- Python 3.10+ (3.11 recommended)
+- A working Python environment (venv or conda)
+- Optional: GPU + CUDA for faster training
 
-### 1. Install Dependencies
+Install dependencies
 
-Run the following command to install the required packages:
+Windows PowerShell (recommended):
 
-pip install -r requirements.txt
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
----
+Or with conda (example):
 
-### 2. Prepare Your Dataset
+```powershell
+conda create -n nn-env python=3.11 -y; conda activate nn-env
+python -m pip install -r requirements.txt
+```
 
-- Place your dataset in data/data.txt (merged text data).
-- Ensure it's preprocessed correctly (tokenized, cleaned, etc.).
+Quick runs
 
----
+- Non-interactive inference (CI-friendly):
 
-### 3. Configure Hyperparameters
+```powershell
+python main.py --mode infer --skip-chat
+```
 
-Modify the configurations in:
+- Train for a few epochs:
 
-- config/config.py (for model settings)
-- config/hyperparams.json (for hyperparameters)
+```powershell
+python main.py --mode train --epochs 3
+```
 
----
+Helpers
+- `run.ps1` — convenience PowerShell script that creates/uses a `.venv` and runs the project (see file header for usage).
+- `scripts/smoke_test.ps1` — the CI smoke test used by GitHub Actions.
 
-### 4. Run the Project
+Tests & CI
+- Unit tests live under `tests/`. To run locally:
 
-Start training:
+```powershell
+python -m pip install pytest
+python -m pytest -q
+```
 
-python main.py
+- GitHub Actions runs a smoke test and pytest on push/PR to `main` (Windows + Ubuntu matrix).
 
-Monitor training progress using TensorBoard:
+Notes
+- Optional dependencies (e.g., `wikipediaapi`, `googletrans`, `deep-translator`) are imported lazily; missing optional packages will not prevent startup.
+- If you plan to train larger models, run on a machine with a GPU and install PyTorch with CUDA support per https://pytorch.org
 
-tensorboard --logdir=logs/
+License: MIT
 
----
-
-## Future Updates
-
-Check next_updates.txt for upcoming enhancements, including:
-
-- Advanced ensemble meta-modeling
+``` 
 - Reinforcement learning-based text generation
-- Few-shot learning improvements
-- Optimized deployment strategies
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Acknowledgments
-
-Thanks to the open-source community for providing the tools and frameworks that made this project possible!
-
-Happy coding!
-"""
-
-# Save the content to a text file
-file_path = "/mnt/data/README.txt"
-with open(file_path, "w") as file:
-    file.write(readme_content)
-
-file_path

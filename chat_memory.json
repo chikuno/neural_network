@@ -1,0 +1,14 @@
+[
+    {
+        "speaker": "user",
+        "text": "hello",
+        "tokens": [
+            1
+        ]
+    },
+    {
+        "speaker": "bot",
+        "text": "Hello! How can I assist you today?",
+        "tokens": []
+    }
+]

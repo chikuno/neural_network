@@ -9,3 +9,6 @@ beautifulsoup4
 requests
 numpy
 matplotlib
+augmentation
+active-learner
+pid_controller
