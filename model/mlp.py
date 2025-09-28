@@ -1,129 +1,86 @@
 import torch
 import torch.nn as nn
 
-class AdvancedMLP(nn.Module):
-    def __init__(self, input_size, hidden_layers, output_size, dropout=0.5, 
-                 activation='relu', batch_norm=True, initializer='he', 
-                 multi_task=False, task_outputs=None, weight_decay=0.0,
-                 use_embedding=False, vocab_size=None, embedding_dim=None):
-        """
-        :param input_size: Number of input features
-        :param hidden_layers: List of integers representing the number of neurons in each hidden layer
-        :param output_size: Number of output features (for single-task or multi-task)
-        :param dropout: Dropout rate (default 0.5)
-        :param activation: Activation function ('relu', 'tanh', 'sigmoid', 'leaky_relu')
-        :param batch_norm: Boolean for batch normalization after each layer
-        :param initializer: Weight initialization method ('he', 'xavier', 'normal')
-        :param multi_task: Boolean for enabling multi-task output
-        :param task_outputs: List of output sizes for each task (for multi-task)
-        :param weight_decay: L2 regularization strength (default 0.0)
-        """
-        super(AdvancedMLP, self).__init__()
 
-        self.input_size = input_size
-        self.hidden_layers = hidden_layers
-        self.output_size = output_size
-        self.dropout = dropout
-        self.activation = activation
-        self.batch_norm = batch_norm
-        self.initializer = initializer
-        self.multi_task = multi_task
-        self.task_outputs = task_outputs
-        self.weight_decay = weight_decay
-        # Optional embedding configuration
-        self.use_embedding = use_embedding
-        if self.use_embedding:
-            if vocab_size is None:
-                raise ValueError('vocab_size must be provided if use_embedding is True')
-            # default embedding dim to input_size if not provided
-            self.vocab_size = vocab_size
-            self.embedding_dim = embedding_dim or input_size
-            self.embed = nn.Embedding(self.vocab_size, self.embedding_dim)
-            # adjust first linear layer input size to embedding_dim
-            in_features = self.embedding_dim
-        else:
-            in_features = input_size
-
-        # If multi-task, adjust output layer configurations
-        if multi_task:
-            assert task_outputs is not None, "For multi-task learning, task_outputs must be specified."
-            self.task_heads = nn.ModuleList([nn.Linear(hidden_layers[-1], out_size) for out_size in task_outputs])
-        else:
-            self.task_heads = [nn.Linear(hidden_layers[-1], output_size)]
-
-        # Build the MLP network
-        layers = []
+class MLPModel(nn.Module):
+    def __init__(self, vocab_size, embedding_dim, hidden_layers, output_size, dropout=0.5):
+        super(MLPModel, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         
+        layers = []
+        in_features = embedding_dim
         for h in hidden_layers:
             layers.append(nn.Linear(in_features, h))
-            if self.batch_norm:
-                layers.append(nn.BatchNorm1d(h))
-            layers.append(self.get_activation_function())
-            layers.append(nn.Dropout(p=dropout))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout))
             in_features = h
         
-        # Output layer
-        if not self.multi_task:
-            layers.append(nn.Linear(in_features, output_size))
+        layers.append(nn.Linear(in_features, output_size))
         
-        self.model = nn.Sequential(*layers)
-        self.apply(self.init_weights)
-
-    def get_activation_function(self):
-        if self.activation == 'relu':
-            return nn.ReLU()
-        elif self.activation == 'tanh':
-            return nn.Tanh()
-        elif self.activation == 'sigmoid':
-            return nn.Sigmoid()
-        elif self.activation == 'leaky_relu':
-            return nn.LeakyReLU(negative_slope=0.01)
-        else:
-            return nn.ReLU()
-
-    def init_weights(self, module):
-        """
-        Weight initialization
-        """
-        if isinstance(module, nn.Linear):
-            if self.initializer == 'he':
-                nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
-            elif self.initializer == 'xavier':
-                nn.init.xavier_normal_(module.weight)
-            elif self.initializer == 'normal':
-                nn.init.normal_(module.weight)
-            nn.init.zeros_(module.bias)
+        self.mlp = nn.Sequential(*layers)
 
     def forward(self, x):
-        """
-        Forward pass of the MLP model
-        """
-        # If the model uses an embedding and x is an index tensor, embed first
-        if self.use_embedding and x.dtype == torch.long:
-            # x may be shape (1,) or (batch,); ensure long and move through embed
-            emb = self.embed(x.to(torch.long))
-            # embed returns (batch, embedding_dim) for indices; ensure correct shape
-            x = emb
+        # x is expected to be a tensor of token indices of shape (batch_size, sequence_length)
+        # However, this simple MLP will just take the last token as input.
+        # A more complex MLP could flatten the embeddings of the whole sequence.
+        last_token_indices = x[:, -1]
+        embedded = self.embedding(last_token_indices)
+        output = self.mlp(embedded)
+        return output, None # Return None for aux_logits to match other models' signatures
 
-        x = self.model(x)
-        
-        if self.multi_task:
-            # Output for each task head
-            outputs = [head(x) for head in self.task_heads]
-            return outputs
+
+class AdvancedMLP(nn.Module):
+    """Flexible MLP used in tests.
+
+    Features:
+    - Optional embedding layer when `use_embedding=True` (expects 1D LongTensor of token indices)
+    - Standard MLP with Linear -> BatchNorm1d -> ReLU -> Dropout blocks
+    - Returns logits tensor of shape (batch, output_size)
+    """
+
+    def __init__(self,
+                 input_size: int,
+                 hidden_layers,
+                 output_size: int,
+                 use_embedding: bool = False,
+                 vocab_size: int = None,
+                 embedding_dim: int = None,
+                 dropout: float = 0.5):
+        super().__init__()
+        self.use_embedding = use_embedding
+        if self.use_embedding:
+            if vocab_size is None or embedding_dim is None:
+                raise ValueError("vocab_size and embedding_dim must be provided when use_embedding=True")
+            self.embedding = nn.Embedding(vocab_size, embedding_dim)
+            effective_input = embedding_dim
         else:
-            return x
-        
-    def get_loss(self, output, target, criterion):
-        """
-        Compute loss for the MLP, supports multi-task learning.
-        """
-        if self.multi_task:
-            losses = []
-            for i, task_output in enumerate(output):
-                loss = criterion(task_output, target[i])
-                losses.append(loss)
-            total_loss = sum(losses)
-            return total_loss
+            effective_input = input_size
+
+        layers = []
+        in_features = effective_input
+        for h in hidden_layers:
+            layers.append(nn.Linear(in_features, h))
+            # BatchNorm adds a tiny overhead but aligns with test comment about batch size >=2
+            layers.append(nn.BatchNorm1d(h))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout))
+            in_features = h
+        layers.append(nn.Linear(in_features, output_size))
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # If using embedding, x expected shape: (batch,) of token indices
+        if self.use_embedding:
+            if x.dim() != 1:
+                # Allow (batch, seq) -> take last token similar to simpler MLP
+                x = x[:, -1]
+            x = self.embedding(x)  # (batch, embedding_dim)
         else:
-            return criterion(output, target)
+            # Expect (batch, features); if 1D, unsqueeze
+            if x.dim() == 1:
+                x = x.unsqueeze(0)
+        return self.net(x)
+
+
+__all__ = [name for name in globals().keys() if name in ("MLPModel", "AdvancedMLP")]
+

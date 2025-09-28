@@ -3,7 +3,7 @@ from .rnn import RNNTextGenerationModel
 from .lstm import LSTMTextGenerationModel
 from .gru import GRUTextGenerationModel
 from .transformer import TransformerTextGenerationModel
-from .mlp import AdvancedMLP as MLPModel
+from .mlp import MLPModel
 from .pid_controller import PIDController
 
 __all__ = [

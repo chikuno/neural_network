@@ -1,0 +1,231 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start TensorBoard",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"-m",
+				"tensorboard.main",
+				"--logdir",
+				"${env:TB_LOG_DIR}",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"6006"
+			],
+			"isBackground": true,
+			"options": {
+				"env": {
+					"TB_LOG_DIR": "${workspaceFolder}/logs"
+				}
+			}
+		},
+		{
+			"label": "Open TensorBoard",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Process 'http://127.0.0.1:6006'"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Start + Open TensorBoard",
+			"type": "shell",
+			"dependsOn": [
+				"Start TensorBoard",
+				"Open TensorBoard"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Gradio App",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"-m",
+				"scripts.gradio_app"
+			],
+			"options": {
+				"env": {
+					"PYTHONUNBUFFERED": "1"
+				}
+			},
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Open Gradio App",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Process 'http://127.0.0.1:7860'"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Start + Open Gradio App",
+			"type": "shell",
+			"dependsOn": [
+				"Run Gradio App",
+				"Open Gradio App"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Train + TensorBoard",
+			"type": "shell",
+			"dependsOn": [
+				"Start TensorBoard",
+				"Train Model"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Train + TensorBoard + Open TB",
+			"type": "shell",
+			"dependsOn": [
+				"Start TensorBoard",
+				"Open TensorBoard",
+				"Train Model"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Train Model",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode",
+				"train",
+				"--epochs",
+				"3"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": ["$tsc"]
+		},
+		{
+			"label": "Evaluate Model",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode",
+				"infer",
+				"--skip-chat"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train Model (Large)",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode",
+				"train",
+				"--epochs",
+				"5",
+				"--model-scale",
+				"large"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train Model (XL)",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode",
+				"train",
+				"--epochs",
+				"5",
+				"--model-scale",
+				"xl"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train RNN (Best Settings)",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode","train",
+				"--epochs","5",
+				"--model","rnn",
+				"--model-scale","large",
+				"--batch-size","128",
+				"--warmup-steps","800"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train LSTM (Best Settings)",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode","train",
+				"--epochs","5",
+				"--model","lstm",
+				"--model-scale","large",
+				"--use-output-attention",
+				"--batch-size","128",
+				"--warmup-steps","800"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train GRU (Best Settings)",
+			"type": "shell",
+			"command": "${command:python.interpreterPath}",
+			"args": [
+				"main.py",
+				"--mode","train",
+				"--epochs","5",
+				"--model","gru",
+				"--model-scale","large",
+				"--batch-size","128",
+				"--warmup-steps","800"
+			],
+			"options": {"env": {"PYTHONUNBUFFERED": "1"}},
+			"problemMatcher": []
+		}
+		,
+		{
+			"label": "Train RNN+LSTM+GRU + TB",
+			"type": "shell",
+			"dependsOn": [
+				"Start TensorBoard",
+				"Train RNN (Best Settings)",
+				"Train LSTM (Best Settings)",
+				"Train GRU (Best Settings)"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		}
+	]
+}

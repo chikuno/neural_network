@@ -1,0 +1,30 @@
+{
+  "models": {
+    "lstm": {
+      "val_loss": 140.73281860351562,
+      "val_ppl": Infinity,
+      "step_count": 6
+    },
+    "transformer": {
+      "val_loss": 198.19700622558594,
+      "val_ppl": Infinity,
+      "step_count": 6
+    },
+    "rnn": {
+      "val_loss": 22.11767578125,
+      "val_ppl": 4032594432.0,
+      "step_count": 6
+    },
+    "gru": {
+      "val_loss": 116.61027526855469,
+      "val_ppl": Infinity,
+      "step_count": 6
+    },
+    "mlp": {
+      "val_loss": 4.38718318939209,
+      "val_ppl": 80.41358947753906,
+      "step_count": 6
+    }
+  },
+  "config_hash": "3238089d6381674ec38edd89a0e1c39f1fe38fa6a3808a26150f67b1a9d13abd"
+}
